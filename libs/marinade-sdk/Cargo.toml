@@ -13,7 +13,7 @@ name = "marinade_sdk"
 overflow-checks = true
 
 [dependencies]
-borsh = "0.9.3"
+borsh = "0.10"
 derive_more = "0.99.17"
 micro-anchor = { path = "../../libs/micro-anchor" }
 marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }

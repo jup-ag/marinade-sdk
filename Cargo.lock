@@ -1021,7 +1021,7 @@ dependencies = [
 name = "marinade-sdk"
 version = "0.1.0"
 dependencies = [
- "borsh 0.9.3",
+ "borsh 0.10.3",
  "derive_more",
  "marinade-sdk-macro",
  "micro-anchor",
@@ -1081,7 +1081,7 @@ dependencies = [
 name = "micro-anchor"
 version = "0.1.0"
 dependencies = [
- "borsh 0.9.3",
+ "borsh 0.10.3",
  "derive_more",
  "solana-program",
 ]

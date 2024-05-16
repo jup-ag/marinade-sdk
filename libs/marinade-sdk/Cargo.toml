@@ -17,5 +17,5 @@ borsh = "0.10"
 derive_more = "0.99.17"
 micro-anchor = { path = "../../libs/micro-anchor" }
 marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }
-solana-program = "~1.16.13"
+solana-program = "~1.17"
 spl-token = { version = "~3.5.0", features = ["no-entrypoint"] }

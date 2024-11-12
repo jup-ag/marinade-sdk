@@ -19,4 +19,4 @@ default = []
 overflow-checks = true
 
 [dependencies]
-anchor-lang = { git = "https://github.com/coral-xyz/anchor" }
+anchor-lang = { git = "https://github.com/coral-xyz/anchor.git", rev = "4cdb0ebe8f613f7dbbd5c4b00571139b2517898f" }

@@ -1,10 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::__private::TokenStream2;
+use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Path, Token};
-use syn_unnamed_struct::{Meta, MetaPath};
 
 /// Example of macro generation that generates
 /// `impl InstructionData` and `Discriminator`
@@ -54,8 +54,11 @@ pub fn derive_instruction_data(input: TokenStream) -> TokenStream {
     // discriminator attribute is required
     let discriminator_attrs = attrs
         .iter()
-        .filter(|a| a.path.is_ident("discriminator"))
-        .flat_map(|attr| attr.tokens.clone())
+        .filter(|a| a.path().is_ident("discriminator"))
+        .map(|attr| {
+            attr.parse_args::<syn::Expr>()
+                .expect("Failed to parse 'discriminator' attribute arguments as expression")
+        })
         .collect::<Vec<_>>();
     if let Some(discriminator_attr) = discriminator_attrs.get(0) {
         let discriminator_impl = quote! {
@@ -71,11 +74,10 @@ pub fn derive_instruction_data(input: TokenStream) -> TokenStream {
     output.into()
 }
 
-const AM_READ_ONLY: &str = "solana_program::instruction::AccountMeta::new_readonly({}, false)";
-const AM_READ_ONLY_SIGNER: &str =
-    "solana_program::instruction::AccountMeta::new_readonly({}, true)";
-const AM_MUT: &str = "solana_program::instruction::AccountMeta::new({}, false)";
-const AM_MUT_SIGNER: &str = "solana_program::instruction::AccountMeta::new({}, true)";
+const AM_READ_ONLY: &str = "solana_instruction::AccountMeta::new_readonly({}, false)";
+const AM_READ_ONLY_SIGNER: &str = "solana_instruction::AccountMeta::new_readonly({}, true)";
+const AM_MUT: &str = "solana_instruction::AccountMeta::new({}, false)";
+const AM_MUT_SIGNER: &str = "solana_instruction::AccountMeta::new({}, true)";
 
 struct AccountsFieldData {
     name: String,
@@ -105,13 +107,13 @@ impl AccountsFieldData {
 }
 
 struct AccountsNameValueParser {
-    pub path: MetaPath,
+    pub path: Path,
     pub _eq_token: Token![=],
     pub value: Path,
 }
 impl Parse for AccountsNameValueParser {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let path = input.parse::<MetaPath>()?;
+        let path = input.parse::<Path>()?;
         Ok(AccountsNameValueParser {
             path,
             _eq_token: input.parse()?,
@@ -124,6 +126,47 @@ impl Parse for AccountsNameValueParser {
 struct AccountsMetaAttributes {
     pub owner_id: Option<TokenStream2>,
     pub data_struct_name: Option<TokenStream2>,
+}
+
+struct AccountListFlags {
+    mutate: bool,
+    signer: bool,
+}
+
+impl Parse for AccountListFlags {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut flags = AccountListFlags {
+            mutate: false,
+            signer: false,
+        };
+
+        while !input.is_empty() {
+            if input.peek(Token![mut]) {
+                let _ = input.parse::<Token![mut]>()?;
+                flags.mutate = true;
+            } else {
+                let ident = input.call(syn::Ident::parse_any)?;
+                match ident.to_string().as_str() {
+                    "mut" => flags.mutate = true,
+                    "signer" => flags.signer = true,
+                    other => {
+                        return Err(syn::Error::new(
+                            ident.span(),
+                            format!("Unrecognized attribute of field '{}'", other),
+                        ))
+                    }
+                }
+            }
+
+            if input.peek(Token![,]) {
+                let _ = input.parse::<Token![,]>()?;
+            } else if !input.is_empty() {
+                return Err(input.error("expected ',' or end of attribute list"));
+            }
+        }
+
+        Ok(flags)
+    }
 }
 
 fn get_related_struct_idents(
@@ -283,7 +326,7 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
     let mut meta_attributes = AccountsMetaAttributes::default();
     attrs
         .iter()
-        .filter(|a| a.path.is_ident("accounts"))
+        .filter(|a| a.path().is_ident("accounts"))
         .flat_map(|attr| {
             attr.parse_args_with(Punctuated::<AccountsNameValueParser, Token![,]>::parse_terminated)
                 .expect("Could not parse 'accounts' attribute")
@@ -338,25 +381,17 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
             field
                 .attrs
                 .iter()
-                .filter(|a| a.path.is_ident("account"))
-                .flat_map(|attr| {
-                    attr.parse_args_with(<Punctuated<Meta, Token![,]>>::parse_terminated)
-                        .expect("Could not parse 'from' attribute")
-                })
-                .for_each(|meta| match meta {
-                    Meta::Path(path) => match path.to_token_stream().to_string().as_str() {
-                        "mut" => {
-                            field_data.mutate = true;
-                        }
-                        "signer" => {
-                            field_data.signer = true;
-                        }
-                        _ => panic!("Unrecognized attribute of field '{}'", field_data.name),
-                    },
-                    _ => panic!(
-                        "Attribute for field {} contains unrecognized value",
-                        field_data.name
-                    ),
+                .filter(|a| a.path().is_ident("account"))
+                .for_each(|attr| {
+                    let flags: AccountListFlags = attr
+                        .parse_args()
+                        .expect("Could not parse 'account' attribute");
+                    if flags.mutate {
+                        field_data.mutate = true;
+                    }
+                    if flags.signer {
+                        field_data.signer = true;
+                    }
                 });
             if field_data.signer && field_data.mutate {
                 field_data.account_meta_formatter = AM_MUT_SIGNER.to_string();
@@ -374,7 +409,7 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
         .iter()
         .map(|(field, props)| {
             if props.type_is_pubkey {
-                quote!(pub #field: solana_program::account_info::AccountInfo<'info>)
+                quote!(pub #field: solana_account_info::AccountInfo<'info>)
             } else {
                 let (_, type_ai_name) = get_related_struct_idents(props.type_name.to_string());
                 quote!(pub #field: #type_ai_name<'info>)
@@ -442,15 +477,15 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
             }
         }
         impl #struct_name {
-            fn to_account_metas_inner(&self) -> Vec<solana_program::instruction::AccountMeta> {
+            fn to_account_metas_inner(&self) -> Vec<solana_instruction::AccountMeta> {
                 vec![
                     #(#to_account_metas_inner_fields),*
                 ]
             }
         }
         impl micro_anchor::ToAccountMetas for #struct_name {
-            fn to_account_metas(&self) -> Vec<solana_program::instruction::AccountMeta> {
-                let mut output: Vec<solana_program::instruction::AccountMeta> = Vec::new();
+            fn to_account_metas(&self) -> Vec<solana_instruction::AccountMeta> {
+                let mut output: Vec<solana_instruction::AccountMeta> = Vec::new();
                 self.to_account_metas_inner().into_iter().for_each(|i| output.push(i));
                 #(#to_account_metas_nested_iter_fields);*
                 output
@@ -458,28 +493,28 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
             type Data = #data_struct_name;
         }
         impl<'info> #infos_struct_name<'info> {
-             fn to_account_infos_inner(&self) -> Vec<solana_program::account_info::AccountInfo<'info>> {
+             fn to_account_infos_inner(&self) -> Vec<solana_account_info::AccountInfo<'info>> {
                 vec![
                     #(#to_infos_fields_cloning_inner),*
                 ]
             }
-            fn to_account_metas_inner(&self) -> Vec<solana_program::instruction::AccountMeta> {
+            fn to_account_metas_inner(&self) -> Vec<solana_instruction::AccountMeta> {
                 vec![
                     #(#to_account_metas_inner_cloning),*
                 ]
             }
         }
         impl<'info> micro_anchor::ToAccountInfos<'info> for #infos_struct_name<'info> {
-            fn to_account_infos(&self) -> Vec<solana_program::account_info::AccountInfo<'info>> {
-                let mut output: Vec<solana_program::account_info::AccountInfo<'info>> = Vec::new();
+            fn to_account_infos(&self) -> Vec<solana_account_info::AccountInfo<'info>> {
+                let mut output: Vec<solana_account_info::AccountInfo<'info>> = Vec::new();
                 self.to_account_infos_inner().into_iter().for_each(|i| output.push(i));
                 #(#to_account_infos_nested_iter_fields);*
                 output
             }
         }
         impl<'info> micro_anchor::ToAccountMetas for #infos_struct_name<'info> {
-            fn to_account_metas(&self) -> Vec<solana_program::instruction::AccountMeta> {
-                let mut output: Vec<solana_program::instruction::AccountMeta> = Vec::new();
+            fn to_account_metas(&self) -> Vec<solana_instruction::AccountMeta> {
+                let mut output: Vec<solana_instruction::AccountMeta> = Vec::new();
                 self.to_account_metas_inner().into_iter().for_each(|i| output.push(i));
                 #(#to_account_metas_nested_iter_fields);*
                 output
@@ -487,12 +522,12 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
             type Data = #data_struct_name;
         }
         impl micro_anchor::Owner for #struct_name {
-            fn owner() -> solana_program::pubkey::Pubkey {
+            fn owner() -> solana_pubkey::Pubkey {
                 #owner_id
             }
         }
         impl<'info> micro_anchor::Owner for #infos_struct_name<'info> {
-            fn owner() -> solana_program::pubkey::Pubkey {
+            fn owner() -> solana_pubkey::Pubkey {
                 #owner_id
             }
         }

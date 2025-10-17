@@ -3,7 +3,7 @@ mod tests {
     use borsh::{BorshDeserialize, BorshSerialize};
     use is_trait::is_trait;
     use marinade_sdk_macro::{InstructionAccounts, InstructionData};
-    use solana_program::pubkey::Pubkey;
+    use solana_pubkey::Pubkey;
 
     #[test]
     fn test_instruction_data() {
@@ -34,7 +34,7 @@ mod tests {
         use micro_anchor::ToAccountMetas;
 
         #[derive(InstructionAccounts)]
-        #[accounts(ownerid=solana_program::bpf_loader::ID,data=SimpleMyTestData)]
+        #[accounts(ownerid=solana_sdk_ids::bpf_loader::ID,data=SimpleMyTestData)]
         pub struct SimpleTestAccounts {
             #[account(mut)]
             pub writable_no_signer: Pubkey,
@@ -59,7 +59,7 @@ mod tests {
         assert!(is_trait!(SimpleTestAccounts, micro_anchor::Owner));
         assert!(is_trait!(SimpleTestAccountInfos, micro_anchor::Owner));
 
-        let account_metas: Vec<solana_program::instruction::AccountMeta> =
+        let account_metas: Vec<solana_instruction::AccountMeta> =
             simple_test_accounts.to_account_metas();
         assert_eq!(account_metas.len(), 4);
         for am in account_metas {
@@ -103,13 +103,13 @@ mod tests {
         use micro_anchor::ToAccountMetas;
 
         #[derive(InstructionAccounts)]
-        #[accounts(ownerid=solana_program::bpf_loader::ID,data=NestedTestData)]
+        #[accounts(ownerid=solana_sdk_ids::bpf_loader::ID,data=NestedTestData)]
         pub struct NestedTestAccounts {
             pub nested_pk: Pubkey,
         }
 
         #[derive(InstructionAccounts)]
-        #[accounts(ownerid=solana_program::bpf_loader::ID,data=OuterTestData)]
+        #[accounts(ownerid=solana_sdk_ids::bpf_loader::ID,data=OuterTestData)]
         pub struct OuterTestAccounts {
             pub outer_pk: Pubkey,
             pub nested_struct: NestedTestAccounts,
@@ -125,8 +125,7 @@ mod tests {
         assert!(is_trait!(OuterTestAccounts, micro_anchor::Owner));
         assert!(is_trait!(OuterTestAccountInfos, micro_anchor::Owner));
 
-        let account_metas: Vec<solana_program::instruction::AccountMeta> =
-            test_accounts.to_account_metas();
+        let account_metas: Vec<solana_instruction::AccountMeta> = test_accounts.to_account_metas();
         assert_eq!(account_metas.len(), 2);
     }
 }

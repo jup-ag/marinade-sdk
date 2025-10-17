@@ -1,5 +1,5 @@
 use derive_more::Display;
-use solana_program::program_error::ProgramError;
+use solana_program_error::ProgramError;
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, Display)]

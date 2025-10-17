@@ -7,15 +7,18 @@ edition = "2021"
 [lib]
 name = "marinade_sdk"
 
-[features]
-
-[profile.release]
-overflow-checks = true
-
 [dependencies]
 borsh = "0.10"
 derive_more = "0.99.17"
-micro-anchor = { path = "../../libs/micro-anchor" }
 marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }
-solana-program = "2"
-spl-token = { version = ">=5", features = ["no-entrypoint"] }
+micro-anchor = { path = "../../libs/micro-anchor" }
+solana-account-info = "2.3"
+solana-instruction = "2.3"
+solana-msg = "2.2"
+solana-program-entrypoint = "2.3"
+solana-program-error = "2.2"
+solana-program-pack = "2.2"
+solana-pubkey = { version = "2.3", features = ["borsh"] }
+solana-sdk-ids = "2.2"
+solana-stake-interface = "1.2.1"
+spl-token-interface = { version = "1.0" }

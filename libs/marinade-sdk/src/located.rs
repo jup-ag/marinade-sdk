@@ -1,5 +1,4 @@
-use solana_program::pubkey::Pubkey;
-
+use solana_pubkey::Pubkey;
 /* Parsed account together with location key concept.
  * For example ProgramAccount or CpiAccount from anchor.
  */

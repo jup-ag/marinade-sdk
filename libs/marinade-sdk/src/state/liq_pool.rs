@@ -1,5 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
+use solana_msg::msg;
+use solana_program_error::{ProgramError, ProgramResult};
+use solana_pubkey::Pubkey;
 
 use crate::{
     calc::proportional, checks::check_address, error::CommonError, located::Located,
@@ -55,7 +57,7 @@ impl LiqPool {
     }
 
     pub fn default_msol_leg_address(state: &Pubkey) -> Pubkey {
-        Pubkey::create_with_seed(state, Self::MSOL_LEG_SEED, &spl_token::ID).unwrap()
+        Pubkey::create_with_seed(state, Self::MSOL_LEG_SEED, &spl_token_interface::ID).unwrap()
     }
 
     pub fn check_lp_mint(&mut self, lp_mint: &Pubkey) -> ProgramResult {

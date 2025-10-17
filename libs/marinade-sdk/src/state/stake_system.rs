@@ -5,10 +5,10 @@ use crate::{
     ID,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_account_info::AccountInfo;
+use solana_msg::msg;
+use solana_program_error::{ProgramError, ProgramResult};
+use solana_pubkey::Pubkey;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize)]
 pub struct StakeRecord {

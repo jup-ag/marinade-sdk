@@ -1,15 +1,11 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{
-    account_info::AccountInfo,
-    entrypoint::ProgramResult,
-    instruction::Instruction,
-    msg,
-    program_error::ProgramError,
-    program_pack::Pack,
-    pubkey::Pubkey,
-    stake, system_program,
-    sysvar::{clock, rent},
-};
+use solana_account_info::AccountInfo;
+use solana_instruction::Instruction;
+use solana_msg::msg;
+use solana_program_error::{ProgramError, ProgramResult};
+use solana_program_pack::Pack;
+use solana_pubkey::Pubkey;
+use solana_sdk_ids::system_program;
 
 use crate::instructions::add_liquidity::{AddLiquidityAccounts, AddLiquidityData};
 use crate::instructions::change_authority::{ChangeAuthorityAccounts, ChangeAuthorityData};
@@ -151,7 +147,7 @@ impl Marinade {
             "treasury_msol_account",
         )?;
 
-        if treasury_msol_account.owner != &spl_token::ID {
+        if treasury_msol_account.owner != &spl_token_interface::ID {
             msg!(
                 "treasury_msol_account {} is not a token account",
                 treasury_msol_account.key
@@ -159,7 +155,9 @@ impl Marinade {
             return Ok(false); // Not an error. Admins may decide to reject fee transfers to themselves
         }
 
-        match spl_token::state::Account::unpack(treasury_msol_account.data.borrow().as_ref()) {
+        match spl_token_interface::state::Account::unpack(
+            treasury_msol_account.data.borrow().as_ref(),
+        ) {
             Ok(token_account) => {
                 if token_account.mint == self.msol_mint {
                     Ok(true)
@@ -446,11 +444,11 @@ where
                 msol_mint: self.as_ref().msol_mint,
                 mint_to,
                 msol_mint_authority: self.msol_mint_authority(),
-                clock: clock::id(),
-                rent: rent::id(),
+                clock: solana_sdk_ids::sysvar::clock::id(),
+                rent: solana_sdk_ids::sysvar::rent::id(),
                 system_program: system_program::ID,
-                token_program: spl_token::ID,
-                stake_program: stake::program::ID,
+                token_program: spl_token_interface::ID,
+                stake_program: solana_stake_interface::program::ID,
             },
             data,
         };
@@ -470,7 +468,7 @@ where
                 mint_to,
                 msol_mint_authority: self.msol_mint_authority(),
                 system_program: system_program::ID,
-                token_program: spl_token::ID,
+                token_program: spl_token_interface::ID,
             },
             data,
         };
@@ -493,7 +491,7 @@ where
                 transfer_from,
                 mint_to,
                 system_program: system_program::ID,
-                token_program: spl_token::ID,
+                token_program: spl_token_interface::ID,
             },
             data,
         };
@@ -520,7 +518,7 @@ where
                 liq_pool_msol_leg: self.as_ref().liq_pool.msol_leg,
                 liq_pool_msol_leg_authority: self.liq_pool_msol_leg_authority(),
                 system_program: system_program::ID,
-                token_program: spl_token::ID,
+                token_program: spl_token_interface::ID,
             },
             data,
         };
@@ -536,7 +534,7 @@ where
                 ticket_account,
                 transfer_sol_to,
                 system_program: system_program::ID,
-                clock: clock::ID,
+                clock: solana_sdk_ids::sysvar::clock::ID,
             },
             data,
         };
@@ -561,7 +559,7 @@ where
                 transfer_sol_to,
                 treasury_msol_account: self.as_ref().treasury_msol_account,
                 system_program: system_program::ID,
-                token_program: spl_token::ID,
+                token_program: spl_token_interface::ID,
             },
             data,
         };
@@ -582,9 +580,9 @@ where
                 burn_msol_from,
                 burn_msol_authority,
                 new_ticket_account,
-                clock: clock::ID,
-                token_program: spl_token::ID,
-                rent: rent::ID,
+                clock: solana_sdk_ids::sysvar::clock::ID,
+                token_program: spl_token_interface::ID,
+                rent: solana_sdk_ids::sysvar::rent::ID,
             },
             data,
         };

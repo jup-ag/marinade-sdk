@@ -5,7 +5,7 @@ pub mod instructions;
 pub mod located;
 pub mod state;
 
-use solana_program::pubkey::Pubkey;
+use solana_pubkey::Pubkey;
 
 #[macro_use]
 extern crate marinade_sdk_macro;

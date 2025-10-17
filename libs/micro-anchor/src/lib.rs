@@ -1,12 +1,10 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use derive_more::{Display, Error};
-use solana_program::{
-    account_info::AccountInfo,
-    entrypoint::ProgramResult,
-    instruction::{AccountMeta, Instruction},
-    program::{invoke, invoke_signed},
-    pubkey::Pubkey,
-};
+use solana_account_info::AccountInfo;
+use solana_cpi::{invoke, invoke_signed};
+use solana_instruction::{AccountMeta, Instruction};
+use solana_program_entrypoint::ProgramResult;
+use solana_pubkey::Pubkey;
 
 /// 8 byte unique identifier for a type.
 pub trait Discriminator {

@@ -1,7 +1,6 @@
 use crate::state::fee::Fee;
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::pubkey::Pubkey;
-
+use solana_pubkey::Pubkey;
 #[derive(
     InstructionData, Clone, Copy, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize,
 )]

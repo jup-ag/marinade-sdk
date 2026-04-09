@@ -16,5 +16,5 @@ log = "0.4.17"
 [dev-dependencies]
 micro-anchor = { path = "../../libs/micro-anchor" }
 solana-program = "~1.14.6"
-borsh = "0.9.3"
+borsh = "1.6.1"
 is_trait = "0.1.4"

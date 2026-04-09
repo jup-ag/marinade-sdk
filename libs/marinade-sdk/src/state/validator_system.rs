@@ -92,7 +92,8 @@ pub struct ValidatorSystem {
 impl ValidatorSystem {
     pub fn bytes_for_list(count: u32, additional_record_space: u32) -> u32 {
         List::bytes_for(
-            ValidatorRecord::default().try_to_vec().unwrap().len() as u32 + additional_record_space,
+            borsh::to_vec(&ValidatorRecord::default()).unwrap().len() as u32
+                + additional_record_space,
             count,
         )
     }

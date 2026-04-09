@@ -1,8 +1,8 @@
-use solana_program::stake::state::StakeState;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
 };
+use solana_stake_interface::state::StakeStateV2;
 use spl_token::state::Account as TokenAccount;
 use spl_token::state::Mint;
 
@@ -126,7 +126,7 @@ pub fn check_token_owner(token: &TokenAccount, owner: &Pubkey, field_name: &str)
 // check that the account is delegated and to the right validator
 // also that the stake amount is updated
 pub fn check_stake_amount_and_validator(
-    stake_state: &StakeState,
+    stake_state: &StakeStateV2,
     expected_stake_amount: u64,
     validator_vote_pubkey: &Pubkey,
 ) -> ProgramResult {

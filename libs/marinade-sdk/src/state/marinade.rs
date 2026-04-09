@@ -7,9 +7,10 @@ use solana_program::{
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
-    stake, system_program,
     sysvar::{clock, rent},
 };
+use solana_sdk_ids::system_program;
+use solana_stake_interface::program as stake_program;
 
 use crate::instructions::add_liquidity::{AddLiquidityAccounts, AddLiquidityData};
 use crate::instructions::change_authority::{ChangeAuthorityAccounts, ChangeAuthorityData};
@@ -96,8 +97,7 @@ impl Marinade {
     pub const VALIDATOR_LIST_SEED: &'static str = "validator_list";
 
     pub fn serialized_len() -> usize {
-        unsafe { MaybeUninit::<Self>::zeroed().assume_init() }
-            .try_to_vec()
+        borsh::to_vec(&unsafe { MaybeUninit::<Self>::zeroed().assume_init() })
             .unwrap()
             .len()
             + 8
@@ -450,7 +450,7 @@ where
                 rent: rent::id(),
                 system_program: system_program::ID,
                 token_program: spl_token::ID,
-                stake_program: stake::program::ID,
+                stake_program: stake_program::ID,
             },
             data,
         };

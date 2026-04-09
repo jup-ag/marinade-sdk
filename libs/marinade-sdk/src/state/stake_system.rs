@@ -49,7 +49,7 @@ impl StakeSystem {
 
     pub fn bytes_for_list(count: u32, additional_record_space: u32) -> u32 {
         List::bytes_for(
-            StakeRecord::default().try_to_vec().unwrap().len() as u32 + additional_record_space,
+            borsh::to_vec(&StakeRecord::default()).unwrap().len() as u32 + additional_record_space,
             count,
         )
     }

@@ -65,7 +65,7 @@ pub trait AccountDeserialize: Sized + BorshDeserialize + Discriminator + Owner {
 pub trait InstructionData: BorshSerialize + BorshDeserialize + Discriminator {
     fn data(&self) -> Vec<u8> {
         let mut result = Self::DISCRIMINATOR.to_vec();
-        result.append(&mut self.try_to_vec().expect("Instruction data must serialize"));
+        result.append(&mut borsh::to_vec(self).expect("Instruction data must serialize"));
         result
     }
 }

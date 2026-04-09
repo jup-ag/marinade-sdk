@@ -66,6 +66,6 @@ impl List {
         }
         let start = 8 + (index * self.item_size()) as usize;
         I::deserialize(&mut &data[start..(start + self.item_size() as usize)])
-            .map_err(|err| ProgramError::BorshIoError(err.to_string()))
+            .map_err(ProgramError::from)
     }
 }

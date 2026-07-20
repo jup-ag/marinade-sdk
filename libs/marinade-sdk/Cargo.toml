@@ -17,8 +17,8 @@ borsh = { version = "1.6.1", features = ["derive", "unstable__schema"] }
 derive_more = "0.99.17"
 micro-anchor = { path = "../../libs/micro-anchor" }
 marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }
-solana-program = "3.0.0"
-solana-pubkey = { version = "3.0.0", features = ["borsh"] }
+solana-program = "4.0.0"
+solana-pubkey = { version = "4.2.0", features = ["borsh"] }
 solana-sdk-ids = "3.1.0"
 solana-stake-interface = "3.1.0"
 spl-token = { version = "9.0.0", features = ["no-entrypoint"] }
